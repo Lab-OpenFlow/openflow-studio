@@ -9,7 +9,8 @@ import {
   Zap,
   GitBranch,
   Clock,
-  Plus
+  Plus,
+  TableProperties
 } from 'lucide-react';
 import { StageType } from '../types';
 
@@ -18,6 +19,14 @@ interface ConnectorCatalogProps {
 }
 
 const ITEMS: { type: StageType; name: string; category: string; icon: any; color: string; desc: string }[] = [
+  {
+    type: 'dmn',
+    name: 'DMN Decision Table',
+    category: 'Decision & Rules',
+    icon: TableProperties,
+    color: '#EC4899',
+    desc: 'Evaluate declarative decision tables (first, collect, rule_order)'
+  },
   {
     type: 'wait_for_signal',
     name: 'Wait for Signal',

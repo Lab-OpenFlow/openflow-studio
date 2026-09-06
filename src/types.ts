@@ -17,7 +17,8 @@ export type StageType =
   | 'wait_for_signal'
   | 'child_workflow'
   | 'approval'
-  | 'worker_task';
+  | 'worker_task'
+  | 'dmn';
 
 export interface RetryPolicy {
   max_attempts: number;
@@ -78,6 +79,7 @@ export interface TriggerConfig {
 export interface Workflow {
   version: string;
   id: string;
+  tenant_id?: string;
   name: string;
   description?: string;
   tags?: string[];
@@ -136,6 +138,7 @@ export interface StepExecution {
 
 export interface Execution {
   id: string;
+  tenant_id?: string;
   workflow_id: string;
   workflow_name: string;
   trigger_type: string;
@@ -218,4 +221,28 @@ export interface TaskItem {
   created_at: string;
   started_at?: string;
   completed_at?: string;
+}
+
+
+export interface DMNInput {
+  name: string;
+  expression: string;
+}
+
+export interface DMNOutput {
+  name: string;
+}
+
+export interface DMNRule {
+  id?: string;
+  description?: string;
+  conditions: Record<string, any>;
+  outputs: Record<string, any>;
+}
+
+export interface DMNConfig {
+  hit_policy: 'first' | 'collect' | 'rule_order';
+  inputs: DMNInput[];
+  outputs: DMNOutput[];
+  rules: DMNRule[];
 }

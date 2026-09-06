@@ -36,6 +36,18 @@ export const App: React.FC = () => {
   const [dryRunModalOpen, setDryRunModalOpen] = useState<boolean>(false);
   const [dryRunPayload, setDryRunPayload] = useState<string>('{\n  "amount": 1500,\n  "customer_id": "CUST_9918"\n}');
   const [dryRunLoading, setDryRunLoading] = useState<boolean>(false);
+  // Multi-Tenancy State
+  const [currentTenant, setCurrentTenant] = useState<string>(() => localStorage.getItem('openflow_tenant_id') || 'default');
+  const [availableTenants, setAvailableTenants] = useState<string[]>(['default', 'production', 'finance', 'staging']);
+
+  const handleSelectTenant = (tenant: string) => {
+    setCurrentTenant(tenant);
+    localStorage.setItem('openflow_tenant_id', tenant);
+    if (!availableTenants.includes(tenant)) {
+      setAvailableTenants((prev) => [...prev, tenant]);
+    }
+  };
+
 
   const handleLoginSuccess = (token: string, user: { username: string; full_name: string; role: string }) => {
     localStorage.setItem('openflow_token', token);
@@ -56,12 +68,15 @@ export const App: React.FC = () => {
     fetchWorkflows();
     fetchExecutions();
     fetchPendingApprovals();
-  }, [authToken]);
+  }, [authToken, currentTenant]);
 
   const fetchWorkflows = async () => {
     try {
       const res = await fetch('/api/v1/workflows', {
-        headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}
+        headers: {
+          ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
+          'X-Tenant-ID': currentTenant
+        }
       });
       const data = await res.json();
       if (data.workflows && data.workflows.length > 0) {
@@ -76,7 +91,10 @@ export const App: React.FC = () => {
   const fetchExecutions = async () => {
     try {
       const res = await fetch('/api/v1/executions', {
-        headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}
+        headers: {
+          ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
+          'X-Tenant-ID': currentTenant
+        }
       });
       const data = await res.json();
       if (data.executions && data.executions.length > 0) {
@@ -225,7 +243,8 @@ export const App: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+          ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
+          'X-Tenant-ID': currentTenant
         },
         body: JSON.stringify({ input: customPayload, variables: initialVars || {} })
       });
@@ -258,6 +277,18 @@ export const App: React.FC = () => {
       }
     };
 
+
+    if (type === 'dmn') {
+      newStage.config = {
+        hit_policy: 'first',
+        inputs: [{ name: 'amount', expression: 'amount' }],
+        outputs: [{ name: 'status' }],
+        rules: [
+          { id: 'rule_1', conditions: { amount: '> 1000' }, outputs: { status: 'APPROVED' } },
+          { id: 'rule_2', conditions: { amount: '<= 1000' }, outputs: { status: 'AUTO_REJECT' } }
+        ]
+      };
+    }
     const updatedWorkflow: Workflow = {
       ...selectedWorkflow,
       stages: [...selectedWorkflow.stages, newStage]
@@ -333,13 +364,15 @@ export const App: React.FC = () => {
 
   const saveWorkflowToServer = async (wf: Workflow) => {
     try {
+      const wfWithTenant = { ...wf, tenant_id: wf.tenant_id || currentTenant };
       await fetch(`/api/v1/workflows/${wf.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+          ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
+          'X-Tenant-ID': currentTenant
         },
-        body: JSON.stringify(wf)
+        body: JSON.stringify(wfWithTenant)
       });
       fetchWorkflows();
     } catch (e) {
@@ -403,6 +436,9 @@ export const App: React.FC = () => {
         wsConnected={wsConnected}
         currentUser={currentUser}
         onLogout={handleLogout}
+        currentTenant={currentTenant}
+        onSelectTenant={handleSelectTenant}
+        availableTenants={availableTenants}
       />
 
       {/* Interactive Run Modal with Custom Payload */}

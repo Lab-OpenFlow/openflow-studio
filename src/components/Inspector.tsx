@@ -12,7 +12,8 @@ import {
   Activity,
   Copy,
   Check,
-  Code2
+  Code2,
+  TableProperties
 } from 'lucide-react';
 import { Stage, Workflow, Execution, StepExecution } from '../types';
 

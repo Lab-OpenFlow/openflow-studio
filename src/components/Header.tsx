@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Layers, Activity, ShieldCheck, BookOpen, LogOut, ChevronDown, Cpu } from 'lucide-react';
+import { Play, Layers, Activity, ShieldCheck, BookOpen, LogOut, ChevronDown, Cpu, Building2 } from 'lucide-react';
 import { Workflow, Execution } from '../types';
 
 interface HeaderProps {
@@ -16,6 +16,9 @@ interface HeaderProps {
   wsConnected: boolean;
   currentUser: { username: string; full_name: string; role: string } | null;
   onLogout: () => void;
+  currentTenant?: string;
+  onSelectTenant?: (tenant: string) => void;
+  availableTenants?: string[];
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -31,7 +34,10 @@ export const Header: React.FC<HeaderProps> = ({
   pendingApprovalsCount,
   wsConnected,
   currentUser,
-  onLogout
+  onLogout,
+  currentTenant = 'default',
+  onSelectTenant,
+  availableTenants = ['default', 'production', 'finance', 'staging']
 }) => {
   const getRoleStyle = (role: string) => {
     switch (role?.toLowerCase()) {
@@ -145,6 +151,59 @@ export const Header: React.FC<HeaderProps> = ({
             style={{ position: 'absolute', right: '10px', top: '12px', pointerEvents: 'none' }}
           />
         </div>
+        {/* Tenant / Namespace Selector */}
+        {onSelectTenant && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            background: 'rgba(30, 41, 59, 0.75)',
+            border: '1px solid rgba(168, 85, 247, 0.4)',
+            borderRadius: '8px',
+            padding: '4px 10px',
+            boxShadow: '0 0 12px rgba(168, 85, 247, 0.15)'
+          }}>
+            <Building2 size={15} color="#C084FC" />
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '0.6rem', fontWeight: 800, color: '#C084FC', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                Namespace / Tenant
+              </span>
+              <select
+                value={currentTenant}
+                onChange={(e) => {
+                  if (e.target.value === '__new__') {
+                    const custom = prompt('Enter new Tenant / Namespace identifier (e.g. billing, staging):');
+                    if (custom && custom.trim()) {
+                      onSelectTenant(custom.trim().toLowerCase());
+                    }
+                  } else {
+                    onSelectTenant(e.target.value);
+                  }
+                }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#f8fafc',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  outline: 'none',
+                  padding: '0'
+                }}
+              >
+                {availableTenants.map((t) => (
+                  <option key={t} value={t} style={{ background: '#0f172a', color: '#f8fafc' }}>
+                    {t}
+                  </option>
+                ))}
+                <option value="__new__" style={{ background: '#0f172a', color: '#C084FC' }}>
+                  + New Tenant...
+                </option>
+              </select>
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* CENTER: 3 Clean Primary Modules */}

@@ -20,7 +20,8 @@ import {
   Plus,
   Trash2,
   Link,
-  ArrowRight
+  ArrowRight,
+  TableProperties
 } from 'lucide-react';
 import { Workflow, Stage, Execution, StepExecution } from '../types';
 
@@ -50,6 +51,7 @@ const getStageIcon = (type: string) => {
     case 'wait_for_signal': return Radio;
     case 'child_workflow': return GitBranch;
     case 'wasm': return Cpu;
+    case 'dmn': return TableProperties;
     default: return Cpu;
   }
 };
@@ -70,6 +72,7 @@ const getStageColor = (type: string) => {
     case 'wait_for_signal': return '#FBBF24';
     case 'child_workflow': return '#8B5CF6';
     case 'wasm': return '#06B6D4';
+    case 'dmn': return '#EC4899';
     default: return '#38BDF8';
   }
 };
